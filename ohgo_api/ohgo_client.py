@@ -5,7 +5,8 @@ from PIL.Image import Image
 from ohgo_api.models.camera import Camera, CameraView
 from ohgo_api.models.contruction import Construction
 from ohgo_api.models.digital_sign import DigitalSign
-from ohgo_api.models.query_params import QueryParams, DigitalSignParams, ConstructionParams
+from ohgo_api.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
+from ohgo_api.models.weather_sensor_site import WeatherSensorSite
 from ohgo_api.rest_adapter import RestAdapter
 from ohgo_api.exceptions import OHGoException
 from ohgo_api.image_handler import ImageHandler
@@ -183,3 +184,29 @@ class OHGoClient:
         result = self._rest_adapter.get(endpoint="construction", fetch_all=fetch_all, ep_params=ep_params)
         construction = [Construction.from_dict(construction) for construction in result.data]
         return construction
+
+    def get_weather_sensor_sites(self, params: WeatherSensorSiteParams = None, fetch_all=False, **kwargs) -> List[WeatherSensorSite]:
+        """
+        Fetches weather sensor sites from the OHGo API
+        :param params: WeatherSensorSiteParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of WeatherSensorSite objects
+        """
+        ep_params = dict(params) if params else {}
+        ep_params.update(kwargs)
+
+        result = self._rest_adapter.get(endpoint="weather-sensor-sites", fetch_all=fetch_all, ep_params=ep_params)
+        weather_sensor_sites = [WeatherSensorSite.from_dict(weather_sensor_site) for weather_sensor_site in result.data]
+        return weather_sensor_sites
+
+    def get_weather_sensor_site(self, site_id) -> WeatherSensorSite:
+        """
+        Fetches a single weather sensor site from the OHGo API
+        :param site_id: The ID of the weather sensor site to fetch
+        :return: A WeatherSensorSite object
+        """
+        result = self._rest_adapter.get(endpoint=f"weather-sensor-sites/{site_id}")
+        if len(result.data) == 0:
+            raise OHGoException(f"No weather sensor site found with ID {site_id}")
+        return WeatherSensorSite.from_dict(result.data[0])

@@ -182,3 +182,25 @@ class ConstructionParams(QueryParams):
 
     def __repr__(self):
         return f"ConstructionParams({self.to_dict()})"
+
+@dataclass
+class WeatherSensorSiteParams(QueryParams):
+    """
+    WeatherSensorSiteParams is a dataclass for storing query parameters to pass to the OHGo API. Has all parameters
+    of QueryParams plus weather sensor site-specific parameter: hazards_only.
+    """
+
+    hazards_only: Optional[bool] = None
+
+    def to_dict(self) -> dict:
+        """
+        Converts the WeatherSensorSiteParams object to a dictionary
+        :return: A dictionary of the WeatherSensorSiteParams object
+        """
+        ep_params = super().to_dict()
+        if self.hazards_only:
+            ep_params["hazards-only"] = self.hazards_only
+        return ep_params
+
+    def __repr__(self):
+        return f"WeatherSensorSiteParams({self.to_dict()})"
