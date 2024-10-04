@@ -3,8 +3,26 @@ from typing import Tuple
 from enum import Enum
 from dataclasses import dataclass
 
-from ohgo_api.models.region import Region
-from ohgo_api.ohgo_client import logger
+from ohgo_api.models.enums import *
+import logging
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+
+def to_enum(enum_str, enum_type) -> Union[str, Enum]:
+    """
+    Attempts to convert a string to an Enum. If the string is not a valid Enum, it returns the string.
+    :param enum_str: The string to convert
+    :param enum_type: The Enum type to convert to
+    :return: An Enum or the original string
+    """
+    enum = enum_str
+    try:
+        enum = enum_type(enum_str)
+    except ValueError:
+        logger.warning(f"{enum_str} may not be valid {enum_type.__name__}.")
+    return enum
 
 
 @dataclass
@@ -38,24 +56,11 @@ class QueryParams:
         """
         Post-init method for QueryParams. Validates the region attribute.
         """
-        if not isinstance(self.region, Region):
-            self.region = self.to_region(self.region)
+        if isinstance(self.region, str):
+            self.region = to_enum(self.region, Region)
 
         if (self.map_bounds_sw and not self.map_bounds_ne) or (self.map_bounds_ne and not self.map_bounds_sw):
             logger.warning(f"Both map-bounds-sw and map-bounds-nw should be set.")
-
-    def to_region(self, region_str) -> Union[str, Region]:
-        """
-        Attempts to convert a string to a Region enum. If the string is not a valid Region, it returns the string.
-        :param region_str: The string to convert
-        :return: A Region enum or the original string
-        """
-        region = region_str
-        try:
-            region = Region(region_str)
-        except ValueError:
-            logger.warning(f"{self.region} may not be valid Region.")
-        return region
 
     def to_dict(self) -> dict:
         """
@@ -81,3 +86,37 @@ class QueryParams:
 
     def __repr__(self):
         return f"QueryParams({self.to_dict()})"
+
+
+@dataclass
+class DigitalSignParams(QueryParams):
+    """
+        DigitalSignParams is a dataclass for storing query parameters to pass to the OHGo. Has all parameters of QueryParams plus sign-type.
+    """
+
+    sign_type: Union[str, SignType] = None
+
+    def __post_init__(self) -> None:
+        """
+        Post-init method for DigitalSignParams. Validates the sign_type attribute.
+        """
+        super().__post_init__()
+        if not isinstance(self.sign_type, SignType):
+            self.sign_type = to_enum(self.sign_type, SignType)
+
+    def to_dict(self) -> dict:
+        """
+        Converts the DigitalSignParams object to a dictionary
+        :return: A dictionary of the DigitalSignParams object
+        """
+        ep_params = super().to_dict()
+        if self.sign_type:
+            if isinstance(self.sign_type, Enum):
+                sign_type = self.sign_type.value
+            else:
+                sign_type = self.sign_type
+            ep_params["sign-type"] = sign_type
+        return ep_params
+
+    def __repr__(self):
+        return f"DigitalSignParams({self.to_dict()})"

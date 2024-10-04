@@ -3,7 +3,8 @@ import logging
 from PIL.Image import Image
 
 from ohgo_api.models.camera import Camera, CameraView
-from ohgo_api.models.query_params import QueryParams
+from ohgo_api.models.digital_sign import DigitalSign
+from ohgo_api.models.query_params import QueryParams, DigitalSignParams
 from ohgo_api.rest_adapter import RestAdapter
 from ohgo_api.exceptions import OHGoException
 from ohgo_api.image_handler import ImageHandler
@@ -111,7 +112,17 @@ class OHGoClient:
             raise OHGoException(f"No camera views found for camera {camera.id}")
         return self.get_image(camera.camera_views[0], size)
 
-    def get_images(self, camera: Camera, size="small") -> List[Image]:
+    @singledispatchmethod
+    def get_images(self, obj) -> List[Image]:
+        """
+        Generic method for fetching images from an object. Not implemented for all types.
+        :param obj: The object to fetch images from
+        :return: List of PIL Image objects
+        """
+        raise NotImplementedError("Cannot get images from this type")
+
+    @get_images.register
+    def _(self, camera: Camera, size="small") -> List[Image]:
         """
         Loops through all CameraViews of a Camera and fetches images for each.
         :param camera: A Camera object
@@ -119,3 +130,40 @@ class OHGoClient:
         :return: List of PIL Image objects
         """
         return [self.get_image(view, size) for view in camera.camera_views]
+
+    @get_images.register
+    def get_images(self, digital_sign: DigitalSign) -> List[Image]:
+        """
+        Fetches all images from a DigitalSign. Filters out any None values.
+        :param digital_sign:
+        :return: a list of PIL Image objects associated with the DigitalSign
+        """
+        # fetch might return None due to request exceptions, we don't want those values
+        images = [self._image_handler.fetch(image_url) for image_url in digital_sign.image_urls]
+        return [image for image in images if image is not None]
+
+    def get_digital_signs(self, params: DigitalSignParams = None, fetch_all=False, **kwargs) -> List[DigitalSign]:
+        """
+        Fetches digital signs from the OHGo API
+        :param params: QueryParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of DigitalSign objects
+        """
+        ep_params = dict(params) if params else {}
+        ep_params.update(kwargs)
+
+        result = self._rest_adapter.get(endpoint="digital-signs", fetch_all=fetch_all, ep_params=ep_params)
+        digital_signs = [DigitalSign.from_dict(digital_sign) for digital_sign in result.data]
+        return digital_signs
+
+    def get_digital_sign(self, digital_sign_id) -> DigitalSign:
+        """
+        Fetches a single digital sign from the OHGo API
+        :param digital_sign_id: The ID of the digital sign to fetch
+        :return: A DigitalSign object
+        """
+        result = self._rest_adapter.get(endpoint=f"digital-signs/{digital_sign_id}")
+        if len(result.data) == 0:
+            raise OHGoException(f"No digital sign found with ID {digital_sign_id}")
+        return DigitalSign.from_dict(result.data[0])

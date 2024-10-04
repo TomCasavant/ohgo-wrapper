@@ -30,3 +30,26 @@ class Region(Enum):
     NW_OHIO = "nw-ohio"
     SE_OHIO = "se-ohio"
     SW_OHIO = "sw-ohio"
+
+
+class SignType(Enum):
+    """
+    SignType is an Enum for the types of digital signs that can be queried from the OHGo API.
+
+    Attributes:
+    DMS: Dynamic Message Sign
+    MESSAGE_BOARD: Message Board
+    DDMS: Dynamic Digital Message Sign
+    TRAVEL_TIME: Travel Time
+    SIGN_QUEUE: Sign Queue
+    SLOW_TRAFFIC: Slow Traffic
+    VSL: Variable Speed Limit
+
+    """
+    DMS = "dms"
+    MESSAGE_BOARD = "message-board"
+    DDMS = "ddms"
+    TRAVEL_TIME = "travel-time"
+    SIGN_QUEUE = "sign-queue"
+    SLOW_TRAFFIC = "slow-traffic"
+    VSL = "vsl"

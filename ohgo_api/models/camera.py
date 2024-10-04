@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Any
 
 from ohgo_api.models.models import from_list, from_str, from_float, to_class, to_float, Link
 
