@@ -1,6 +1,5 @@
 from ohgo_api.models.models import *
 from typing import Tuple
-from enum import Enum
 from dataclasses import dataclass
 
 from ohgo_api.models.enums import *
@@ -120,3 +119,66 @@ class DigitalSignParams(QueryParams):
 
     def __repr__(self):
         return f"DigitalSignParams({self.to_dict()})"
+
+# In addition to the default resource filter, the construction resource allows you to pull in construction scheduled for the future.
+#
+# include-future
+#
+#     Returns existing construction as well as construction scheduled for the future.
+#     Must pass a date parameter which indicates how far in the future to look.
+#     Future date is included in the result set.
+#     Only checks date value in the format yyyy-mm-dd (4 digit year - 2 digit month - 2 digit day).
+#
+# future-only
+#
+#     Returns construction scheduled for the future. Starting at tomorrow's date.
+#     Must pass a date parameter which indicates how far in the future to look.
+#     Future date is included in the result set.
+#     Only checks date value in the format yyyy-mm-dd (4 digit year - 2 digit month - 2 digit day).
+@dataclass
+class ConstructionParams(QueryParams):
+    """
+    ConstructionParams is a dataclass for storing query parameters to pass to the OHGo API. Has all parameters of
+    QueryParams plus construction-specific parameters, include_future and future_only.
+
+    Attributes:
+    include_future: Whether to include future construction, defaults to None. Format: True or False
+    future_only: Whether to only include future construction, defaults to None. Format: True or False
+
+    """
+
+    include_future: Optional[datetime] = None
+    future_only: Optional[datetime] = None
+
+    def __post_init__(self) -> None:
+        """
+        Post-init method for ConstructionParams. Validates the include_future and future_only attributes.
+        """
+        super().__post_init__()
+        if self.include_future and not isinstance(self.include_future, datetime):
+            logger.warning(f"include_future should be a datetime object to automatically convert to yyyy-mm-dd")
+
+        if self.future_only and not isinstance(self.future_only, datetime):
+            logger.warning(f"future_only should be a datetime object to automatically convert to yyyy-mm-dd")
+    def to_dict(self) -> dict:
+        """
+        Converts the ConstructionParams object to a dictionary
+        :return: A dictionary of the ConstructionParams object
+        """
+        ep_params = super().to_dict()
+        if self.include_future:
+            if isinstance(self.include_future, datetime):
+                include_future = self.include_future.strftime("%Y-%m-%d")
+            else:
+                include_future = self.include_future
+            ep_params["include-future"] = include_future
+        if self.future_only:
+            if isinstance(self.future_only, datetime):
+                future_only = self.future_only.strftime("%Y-%m-%d")
+            else:
+                future_only = self.future_only
+            ep_params["future-only"] = future_only
+        return ep_params
+
+    def __repr__(self):
+        return f"ConstructionParams({self.to_dict()})"

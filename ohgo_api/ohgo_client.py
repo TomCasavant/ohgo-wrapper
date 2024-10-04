@@ -3,8 +3,9 @@ import logging
 from PIL.Image import Image
 
 from ohgo_api.models.camera import Camera, CameraView
+from ohgo_api.models.contruction import Construction
 from ohgo_api.models.digital_sign import DigitalSign
-from ohgo_api.models.query_params import QueryParams, DigitalSignParams
+from ohgo_api.models.query_params import QueryParams, DigitalSignParams, ConstructionParams
 from ohgo_api.rest_adapter import RestAdapter
 from ohgo_api.exceptions import OHGoException
 from ohgo_api.image_handler import ImageHandler
@@ -145,7 +146,7 @@ class OHGoClient:
     def get_digital_signs(self, params: DigitalSignParams = None, fetch_all=False, **kwargs) -> List[DigitalSign]:
         """
         Fetches digital signs from the OHGo API
-        :param params: QueryParams object to pass to the API
+        :param params: DigitalSignParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
         :param kwargs: Extra arguments to pass to the API.
         :return: List of DigitalSign objects
@@ -167,3 +168,18 @@ class OHGoClient:
         if len(result.data) == 0:
             raise OHGoException(f"No digital sign found with ID {digital_sign_id}")
         return DigitalSign.from_dict(result.data[0])
+
+    def get_construction(self, params: ConstructionParams = None, fetch_all=False, **kwargs) -> List[Construction]:
+        """
+        Fetches construction from the OHGo API
+        :param params: ConstructionParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of Construction objects
+        """
+        ep_params = dict(params) if params else {}
+        ep_params.update(kwargs)
+
+        result = self._rest_adapter.get(endpoint="construction", fetch_all=fetch_all, ep_params=ep_params)
+        construction = [Construction.from_dict(construction) for construction in result.data]
+        return construction

@@ -1,4 +1,7 @@
+from datetime import datetime
 from typing import *
+
+import dateutil.parser
 
 T = TypeVar("T")
 
@@ -50,6 +53,8 @@ class Result:
 
 
 def from_str(x: Any) -> str:
+    if x is None:
+        return ""
     assert isinstance(x, str)
     return x
 
@@ -74,6 +79,8 @@ def to_float(x: Any) -> float:
     return x
 
 
+def from_datetime(x: Any) -> datetime:
+    return dateutil.parser.parse(x)
 class Link:
     """
     Link is a class for storing a link object.
