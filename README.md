@@ -2,49 +2,53 @@
 
 This is a python package that provides a simple interface to the [OHGO API](https://publicapi.ohgo.com/). 
 
-## Examples
+## Installation
+```bash
+pip install ohgo
+```
 
+## Examples
 ### Authentication
 ```python
-	from ohgo.ohgo_client import OHGOClient
+from ohgo.ohgo_client import OHGOClient
 
-	# Register with OHGo for an API Key (https://publicapi.ohgo.com/docs/registration)
-	client = OHGOClient(api_key='YOUR-API-KEY')
+# Register with OHGo for an API Key (https://publicapi.ohgo.com/docs/registration)
+client = OHGOClient(api_key='YOUR-API-KEY')
 ```
 
 ### Get Cameras (default page size is 500)
 ```python
-    cameras = client.get_cameras()
+cameras = client.get_cameras()
 ```
 
 ### Get All Cameras
 ```python
-    from ohgo.models.query_params import QueryParams
-    params = QueryParams(page_all=True)
-    cameras = client.get_cameras(params=params)
+from ohgo.models.query_params import QueryParams
+params = QueryParams(page_all=True)
+cameras = client.get_cameras(params=params)
 ```
 
 ### Get Cameras by Filter
 ```python
-    from ohgo.models.query_params import QueryParams
-    from ohgo.models.enums import Region
-    params = QueryParams(county=Region.COLUMBUS, page_size=10, page=2)
-    cameras = client.get_cameras(params=params)
+from ohgo.models.query_params import QueryParams
+from ohgo.models.enums import Region
+params = QueryParams(county=Region.COLUMBUS, page_size=10, page=2)
+cameras = client.get_cameras(params=params)
 ```
 
 ### Get Camera by ID
 ```python
-    camera = client.get_camera(camera_id='YOUR-CAMERA-ID')
+camera = client.get_camera(camera_id='YOUR-CAMERA-ID')
 ```
 
 ### Get Images from Camera
 ```python
-    camera = client.get_camera(camera_id='YOUR-CAMERA-ID')
-    images = client.get_images(camera, "small") # Returns [ Image, Image, ... ]
+camera = client.get_camera(camera_id='YOUR-CAMERA-ID')
+images = client.get_images(camera, "small") # Returns [ Image, Image, ... ]
 
-    # OR 
-    camera_view = camera.camera_views[0]
-    images = client.get_image(camera_view, "small") # Returns Image
+# OR 
+camera_view = camera.camera_views[0]
+images = client.get_image(camera_view, "small") # Returns Image
 ```
 
 ### Other Endpoints
@@ -59,17 +63,17 @@ This is a python package that provides a simple interface to the [OHGO API](http
 
 ### Other Query Objects
 ```python
-    from ohgo.models.query_params import QueryParams, DigitalSignParams, ConsutrctionParams, WeatherSensorSiteParams
-    from ohgo.models.enums import Region, SignType
-    import datetime
+from ohgo.models.query_params import QueryParams, DigitalSignParams, ConsutrctionParams, WeatherSensorSiteParams
+from ohgo.models.enums import Region, SignType
+import datetime
     
-    # Note: If you use *all* these params you will probably get no results
-    params = QueryParams(page_size=10, page=2, region=Region.COLUMBUS, map_bounds_sw=(39.9612, -82.9988), map_bounds_ne=(40.0150, -82.8874), radius=(39.9612, -82.9988, 10))
-    digital_sign_params = DigitalSignParams(sign_type=SignType.DMS)
+# Note: If you use *all* these params you will probably get no results
+params = QueryParams(page_size=10, page=2, region=Region.COLUMBUS, map_bounds_sw=(39.9612, -82.9988), map_bounds_ne=(40.0150, -82.8874), radius=(39.9612, -82.9988, 10))
+digital_sign_params = DigitalSignParams(sign_type=SignType.DMS)
     
-    # You can use string in the format 'YYYY-MM-DD', but it is recommended to use datetime objects
-    construction_params = ConstructionParams(include_future=datetime.datetime.now(), future_only=datetime.datetime.now())
-    weather_sensor_site_params = WeatherSensorSiteParams(hazards_only=True)
+# You can use string in the format 'YYYY-MM-DD', but it is recommended to use datetime objects
+construction_params = ConstructionParams(include_future=datetime.datetime.now(), future_only=datetime.datetime.now())
+weather_sensor_site_params = WeatherSensorSiteParams(hazards_only=True)
 
-    # All params inherit default attributes from QueryParams
+# All params inherit default attributes from QueryParams
 ```
