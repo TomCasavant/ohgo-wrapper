@@ -53,12 +53,12 @@ images = client.get_image(camera_view, "small") # Returns Image
 
 ### Other Endpoints
 ```python
-    client.get_digital_signs() # -> List[DigitalSign]
-    client.get_constructions() # -> List[Construction]
-    client.get_weather_sensor_sites() # -> List[WeatherSensorSite]
-    client.get_incidents() # -> List[Incident]
-    client.get_dangerous_slowdowns() # -> List[DangerousSlowdown]
-    client.get_cameras() # -> List[Camera]
+client.get_digital_signs() # -> List[DigitalSign]
+client.get_constructions() # -> List[Construction]
+client.get_weather_sensor_sites() # -> List[WeatherSensorSite]
+client.get_incidents() # -> List[Incident]
+client.get_dangerous_slowdowns() # -> List[DangerousSlowdown]
+client.get_cameras() # -> List[Camera]
 ```
 
 ### Other Query Objects
