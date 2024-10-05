@@ -1,7 +1,7 @@
 from typing import Union
 
-from ohgo_api.exceptions import OHGoException
-from ohgo_api.rest_adapter import RestAdapter
+from ohgo.exceptions import OHGOException
+from ohgo.rest_adapter import RestAdapter
 from PIL import Image
 
 
@@ -10,7 +10,7 @@ class ImageHandler:
     ImageHandler is a class for handling image fetching from URLs
 
     Attributes:
-    _rest_adapter: RestAdapter for making HTTP requests to the OHGo API
+    _rest_adapter: RestAdapter for making HTTP requests to the OHGO API
 
     Methods:
     fetch: Fetches an image from a URL
@@ -18,8 +18,8 @@ class ImageHandler:
 
     def __init__(self, rest_adapter: RestAdapter):
         """
-        Constructor for ImageHandler. Initializes the RestAdapter for making HTTP requests to the OHGo API.
-        :param rest_adapter: RestAdapter for making HTTP requests to the OHGo API
+        Constructor for ImageHandler. Initializes the RestAdapter for making HTTP requests to the OHGO API.
+        :param rest_adapter: RestAdapter for making HTTP requests to the OHGO API
         """
         self._rest_adapter = rest_adapter
 
@@ -31,6 +31,6 @@ class ImageHandler:
         """
         try:
             image_bytes = self._rest_adapter.get_image(url)
-        except OHGoException:
+        except OHGOException:
             return None
         return Image.open(image_bytes)

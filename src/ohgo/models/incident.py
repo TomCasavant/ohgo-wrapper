@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, List
 
-from ohgo_api.models.base_model import BaseModel
-from ohgo_api.models.models import Link, from_list, from_str, from_float, to_float, to_class
+from ohgo.models.base_model import BaseModel
+from ohgo.models.models import Link, from_list, from_str, from_float, to_float, to_class
 
 @dataclass
 class Incident(BaseModel):

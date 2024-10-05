@@ -1,7 +1,7 @@
 from typing import Any, List
 
-from ohgo_api.models.base_model import BaseModel
-from ohgo_api.models.models import from_list, from_str, from_float, from_int, Link, to_float, to_class
+from ohgo.models.base_model import BaseModel
+from ohgo.models.models import from_list, from_str, from_float, from_int, Link, to_float, to_class
 
 
 class DangerousSlowdown(BaseModel):

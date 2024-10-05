@@ -1,8 +1,8 @@
 import requests
 import requests.packages
 from typing import Dict
-from .exceptions import OHGoException
-from ohgo_api.models.models import Result
+from .exceptions import OHGOException
+from ohgo.models.models import Result
 from json import JSONDecodeError
 import logging
 from io import BytesIO
@@ -10,18 +10,18 @@ from io import BytesIO
 
 class RestAdapter:
     """
-    RestAdapter is a class for making HTTP requests to the OHGo API
+    RestAdapter is a class for making HTTP requests to the OHGO API
 
     Attributes:
-    url: The base URL of the OHGo API
-    _api_key: The API key for the OHGo API
+    url: The base URL of the OHGO API
+    _api_key: The API key for the OHGO API
     _ssl_verify: Whether to verify SSL certificates
     _logger: A logger for logging messages
 
     Methods:
-    get: Makes a GET request to the OHGo API
+    get: Makes a GET request to the OHGO API
     get_image: Fetches an image from a URL
-    _do: Makes a request to the OHGo API
+    _do: Makes a request to the OHGO API
     """
     def __init__(
             self,
@@ -33,8 +33,8 @@ class RestAdapter:
     ):
         """
         Constructor for RestAdapter. Initializes the base URL, API key, SSL verification, and logger.
-        :param hostname: hostname of the OHGo API. Almost always "publicapi.ohgo.com"
-        :param api_key: API key for the OHGo API
+        :param hostname: hostname of the OHGO API. Almost always "publicapi.ohgo.com"
+        :param api_key: API key for the OHGO API
         :param ver: Version of the API to use. Defaults to "v1"
         :param ssl_verify: Whether to verify SSL certificates. Defaults to True
         :param logger: (optional) A logger to use for logging. Defaults to None. A new logger will be created if None.
@@ -49,7 +49,7 @@ class RestAdapter:
 
     def get(self, endpoint: str, ep_params: Dict = {}, fetch_all=False) -> Result:
         """
-        Makes a GET request to the OHGo API
+        Makes a GET request to the OHGO API
         :param endpoint: The endpoint to make the request to
         :param ep_params: The parameters to pass to the endpoint
         :param fetch_all: Whether to fetch all results. Defaults to False. Recommended to use page-all param instead.
@@ -77,14 +77,14 @@ class RestAdapter:
             return BytesIO(response.content)
         except requests.RequestException as e:
             self._logger.error(f"Error while fetching image from {url}: {e}")
-            raise OHGoException(f"Failed to fetch image from {url}") from e
+            raise OHGOException(f"Failed to fetch image from {url}") from e
 
     def _do(
             self, http_method: str, endpoint: str, ep_params: Dict = {}, data: Dict = {}
     ) -> Result:
         """
-        Helper method that makes a request to the OHGo API
-        :param http_method: The HTTP method to use. Currently, OHGo only supports GET
+        Helper method that makes a request to the OHGO API
+        :param http_method: The HTTP method to use. Currently, OHGO only supports GET
         :param endpoint: The endpoint to make the request to
         :param ep_params: The parameters to pass to the endpoint
         :param data: The data to pass to the endpoint.
@@ -107,7 +107,7 @@ class RestAdapter:
                 json=data,
             )
         except (ValueError, JSONDecodeError) as e:
-            raise OHGoException("Request failed.") from e
+            raise OHGOException("Request failed.") from e
         data_out = response.json()
         if 299 >= response.status_code >= 200:
             # Successful request
@@ -118,8 +118,8 @@ class RestAdapter:
             )
 
             for query_filter in result.rejected_filters:
-                # OHGo rejected a filter, log a warning
+                # OHGO rejected a filter, log a warning
                 self._logger.warning(f" Error: {query_filter['error']} - {query_filter['key']}:{query_filter['value']}")
 
             return result
-        raise OHGoException(f"{response.status_code}: {response.reason}")
+        raise OHGOException(f"{response.status_code}: {response.reason}")

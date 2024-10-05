@@ -3,7 +3,7 @@ from enum import Enum
 
 class Region(Enum):
     """
-    Region is an Enum for the regions of Ohio that can be queried from the OHGo API.
+    Region is an Enum for the regions of Ohio that can be queried from the OHGO API.
 
     Attributes:
     AKRON: Akron region
@@ -34,7 +34,7 @@ class Region(Enum):
 
 class SignType(Enum):
     """
-    SignType is an Enum for the types of digital signs that can be queried from the OHGo API.
+    SignType is an Enum for the types of digital signs that can be queried from the OHGO API.
 
     Attributes:
     DMS: Dynamic Message Sign

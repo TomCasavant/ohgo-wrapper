@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Any
 
-from ohgo_api.models.base_model import BaseModel
-from ohgo_api.models.models import from_list, from_str, from_float, to_float, to_class, Link
+from ohgo.models.base_model import BaseModel
+from ohgo.models.models import from_list, from_str, from_float, to_float, to_class, Link
 
 
 @dataclass

@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 class Result:
     """
-    Result is a class for storing the results of an OHGo API query.
+    Result is a class for storing the results of an OHGO API query.
 
     Attributes:
     status_code: The status code of the query as an integer

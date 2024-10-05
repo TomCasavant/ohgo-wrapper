@@ -1,0 +1,2 @@
+class OHGOException(Exception):
+    pass

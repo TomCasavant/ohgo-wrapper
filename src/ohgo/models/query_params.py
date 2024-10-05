@@ -1,8 +1,8 @@
-from ohgo_api.models.models import *
+from ohgo.models.models import *
 from typing import Tuple
 from dataclasses import dataclass
 
-from ohgo_api.models.enums import *
+from ohgo.models.enums import *
 import logging
 
 logging.basicConfig(level=logging.WARNING)
@@ -27,7 +27,7 @@ def to_enum(enum_str, enum_type) -> Union[str, Enum]:
 @dataclass
 class QueryParams:
     """
-    QueryParams is a dataclass for storing query parameters to pass to the OHGo API.
+    QueryParams is a dataclass for storing query parameters to pass to the OHGO API.
 
     Attributes:
     region: The region to query, defaults to None. Format: Region enum or string
@@ -90,7 +90,7 @@ class QueryParams:
 @dataclass
 class DigitalSignParams(QueryParams):
     """
-        DigitalSignParams is a dataclass for storing query parameters to pass to the OHGo. Has all parameters of QueryParams plus sign-type.
+        DigitalSignParams is a dataclass for storing query parameters to pass to the OHGO. Has all parameters of QueryParams plus sign-type.
     """
 
     sign_type: Union[str, SignType] = None
@@ -120,25 +120,10 @@ class DigitalSignParams(QueryParams):
     def __repr__(self):
         return f"DigitalSignParams({self.to_dict()})"
 
-# In addition to the default resource filter, the construction resource allows you to pull in construction scheduled for the future.
-#
-# include-future
-#
-#     Returns existing construction as well as construction scheduled for the future.
-#     Must pass a date parameter which indicates how far in the future to look.
-#     Future date is included in the result set.
-#     Only checks date value in the format yyyy-mm-dd (4 digit year - 2 digit month - 2 digit day).
-#
-# future-only
-#
-#     Returns construction scheduled for the future. Starting at tomorrow's date.
-#     Must pass a date parameter which indicates how far in the future to look.
-#     Future date is included in the result set.
-#     Only checks date value in the format yyyy-mm-dd (4 digit year - 2 digit month - 2 digit day).
 @dataclass
 class ConstructionParams(QueryParams):
     """
-    ConstructionParams is a dataclass for storing query parameters to pass to the OHGo API. Has all parameters of
+    ConstructionParams is a dataclass for storing query parameters to pass to the OHGO API. Has all parameters of
     QueryParams plus construction-specific parameters, include_future and future_only.
 
     Attributes:
@@ -186,7 +171,7 @@ class ConstructionParams(QueryParams):
 @dataclass
 class WeatherSensorSiteParams(QueryParams):
     """
-    WeatherSensorSiteParams is a dataclass for storing query parameters to pass to the OHGo API. Has all parameters
+    WeatherSensorSiteParams is a dataclass for storing query parameters to pass to the OHGO API. Has all parameters
     of QueryParams plus weather sensor site-specific parameter: hazards_only.
     """
 
