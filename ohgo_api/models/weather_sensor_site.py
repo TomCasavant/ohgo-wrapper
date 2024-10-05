@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Any
+from typing import List, Any, Optional
 
+from ohgo_api.models.base_model import BaseModel
 from ohgo_api.models.models import from_list, from_str, Link, from_float, to_class, to_float, from_bool, \
     from_datetime, from_int
 
@@ -74,43 +75,88 @@ class SurfaceSensor:
 
 
 @dataclass
-class WeatherSensorSite:
-    links: List[Link]
-    id: int
-    latitude: float
-    longitude: float
-    location: str
-    description: None
+class WeatherSensorSite(BaseModel):
+    """
+    WeatherSensorSite is a class for storing weather sensor site objects.
+
+    Attributes:
+    severe: A boolean indicating if the weather conditions are severe.
+    condition: The current weather condition at the site.
+    average_air_temperature: The average air temperature at the site.
+    atmospheric_sensors: A list of atmospheric sensors at the site.
+    surface_sensors: A list of surface sensors at the site.
+    """
+
     severe: bool
-    condition: None
+    condition: Optional[str]
     average_air_temperature: str
     atmospheric_sensors: List[AtmosphericSensor]
     surface_sensors: List[SurfaceSensor]
 
+    def __init__(
+            self,
+            links: List[Link],
+            id: str,
+            latitude: float,
+            longitude: float,
+            location: str,
+            description: Optional[str],
+            severe: bool,
+            condition: Optional[str],
+            average_air_temperature: str,
+            atmospheric_sensors: List[AtmosphericSensor],
+            surface_sensors: List[SurfaceSensor]
+    ):
+        """
+        Initializes the WeatherSensorSite object with common fields and weather-specific fields.
+        :param links: A list of Link objects associated with the weather sensor site.
+        :param id: The ID of the weather sensor site.
+        :param latitude: The latitude of the weather sensor site.
+        :param longitude: The longitude of the weather sensor site.
+        :param location: The location of the weather sensor site.
+        :param description: A description of the weather sensor site.
+        :param severe: A boolean indicating if the weather conditions are severe.
+        :param condition: The current weather condition at the site.
+        :param average_air_temperature: The average air temperature recorded at the site.
+        :param atmospheric_sensors: A list of AtmosphericSensor objects.
+        :param surface_sensors: A list of SurfaceSensor objects.
+        """
+        super().__init__(links, id, latitude, longitude, location, description)  # Call BaseModel's init
+        self.severe = severe
+        self.condition = condition
+        self.average_air_temperature = average_air_temperature
+        self.atmospheric_sensors = atmospheric_sensors
+        self.surface_sensors = surface_sensors
+
     @staticmethod
     def from_dict(obj: Any) -> 'WeatherSensorSite':
-        assert isinstance(obj, dict)
-        links = from_list(Link.from_dict, obj.get("links"))
-        id = int(from_str(obj.get("id")))
-        latitude = from_float(obj.get("latitude"))
-        longitude = from_float(obj.get("longitude"))
-        location = from_str(obj.get("location"))
-        description = from_str(obj.get("description"))
+        """
+        Converts a dictionary into a WeatherSensorSite object.
+        :param obj: A dictionary representing a WeatherSensorSite.
+        :return: A WeatherSensorSite object.
+        """
+        base_model = BaseModel.from_base_dict(obj)  # Get common fields using BaseModel
         severe = from_bool(obj.get("severe"))
         condition = from_str(obj.get("condition"))
         average_air_temperature = from_str(obj.get("averageAirTemperature"))
         atmospheric_sensors = from_list(AtmosphericSensor.from_dict, obj.get("atmosphericSensors"))
         surface_sensors = from_list(SurfaceSensor.from_dict, obj.get("surfaceSensors"))
-        return WeatherSensorSite(links, id, latitude, longitude, location, description, severe, condition,
-                                 average_air_temperature, atmospheric_sensors, surface_sensors)
+        return WeatherSensorSite(base_model.links, base_model.id, base_model.latitude, base_model.longitude,
+                                 base_model.location, base_model.description, severe, condition, average_air_temperature,
+                                 atmospheric_sensors, surface_sensors)
 
     def to_dict(self) -> dict:
-        result: dict = {"links": from_list(lambda x: to_class(Link, x), self.links), "id": from_str(str(self.id)),
-                        "latitude": to_float(self.latitude), "longitude": to_float(self.longitude),
-                        "location": from_str(self.location), "description": from_str(self.description),
-                        "severe": from_bool(self.severe), "condition": from_str(self.condition),
-                        "averageAirTemperature": from_str(self.average_air_temperature),
-                        "atmosphericSensors": from_list(lambda x: to_class(AtmosphericSensor, x),
-                                                        self.atmospheric_sensors),
-                        "surfaceSensors": from_list(lambda x: to_class(SurfaceSensor, x), self.surface_sensors)}
+        """
+        Converts the WeatherSensorSite object into a dictionary.
+        :return: A dictionary representation of the WeatherSensorSite object.
+        """
+        result = self.base_to_dict()  # Get common fields from BaseModel
+        result.update({
+            "severe": from_bool(self.severe),
+            "condition": from_str(self.condition),
+            "averageAirTemperature": from_str(self.average_air_temperature),
+            "atmosphericSensors": from_list(lambda x: to_class(AtmosphericSensor, x), self.atmospheric_sensors),
+            "surfaceSensors": from_list(lambda x: to_class(SurfaceSensor, x), self.surface_sensors)
+        })
         return result
+

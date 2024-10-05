@@ -1,8 +1,11 @@
+from dataclasses import dataclass
 from typing import List, Any
 
+from ohgo_api.models.base_model import BaseModel
 from ohgo_api.models.models import from_list, from_str, from_float, to_class, to_float, Link
 
 
+@dataclass
 class CameraView:
     """
     CameraView is a class for storing the view of a camera.
@@ -51,81 +54,58 @@ class CameraView:
                         "largeUrl": from_str(self.large_url), "mainRoute": from_str(self.main_route)}
         return result
 
-
-class Camera:
+@dataclass
+class Camera(BaseModel):
     """
     Camera is a class for storing camera objects.
 
     Attributes:
-    links: The links associated with the camera
-    id: The ID of the camera
-    latitude: The latitude of the camera
-    longitude: The longitude of the camera
-    location: The location of the camera
-    description: The description of the camera. Usually relating to the camera's location
     camera_views: The views of the camera. Each view is a CameraView object that contains information about an image.
 
-    Methods:
-    from_dict: Converts a dictionary to a Camera object
-    to_dict: Converts the Camera object to a dictionary
-
     """
-    links: List[Link]
-    id: str
-    latitude: float
-    longitude: float
-    location: str
-    description: str
-    camera_views: List[CameraView]
 
+    camera_views: List[CameraView]
     def __init__(
             self,
-            links=None,
-            id=None,
-            latitude=None,
-            longitude=None,
-            location=None,
-            description=None,
-            camera_views=None,
-            **kwargs
+            links: List[Link],
+            id: str,
+            latitude: float,
+            longitude: float,
+            location: str,
+            description: str,
+            camera_views: List[CameraView]
     ):
         """
-        Initializes the Camera object with the links, id, latitude, longitude, location, description, and camera views.
+        Initializes the Camera object with common fields and camera views.
         :param links: A list of Link objects that relate to the Camera. Usually just a direct link to the camera's page.
-        :param id: The ID of the camera
-        :param latitude: The latitude of the camera's location
-        :param longitude: The longitude of the camera's location
+        :param id: The ID of the camera.
+        :param latitude: The latitude of the camera's location.
+        :param longitude: The longitude of the camera's location.
         :param location: The location of the camera. Usually a road or intersection.
-        :param description: The description of the camera. Usually a description of the camera's location.
+        :param description: The description of the camera's location.
         :param camera_views: A list of CameraView objects that contain information about the camera's views.
         """
-        self.id = id
-        self.links = links
-        self.latitude = latitude
-        self.longitude = longitude
-        self.location = location
-        self.description = description
+        super().__init__(links, id, latitude, longitude, location, description)  # Call BaseModel's init
         self.camera_views = camera_views
 
     @staticmethod
     def from_dict(obj: Any) -> "Camera":
-        assert isinstance(obj, dict)
-        links = from_list(Link.from_dict, obj.get("links"))
-        id = from_str(obj.get("id"))
-        latitude = from_float(obj.get("latitude"))
-        longitude = from_float(obj.get("longitude"))
-        location = from_str(obj.get("location"))
-        description = from_str(obj.get("description"))
+        """
+        Converts a dictionary into a Camera object.
+        :param obj: A dictionary representing a Camera object.
+        :return: A Camera object.
+        """
+        base_model = BaseModel.from_base_dict(obj)  # Get common fields using BaseModel
         camera_views = from_list(CameraView.from_dict, obj.get("cameraViews"))
-        return Camera(
-            links, id, latitude, longitude, location, description, camera_views
-        )
+        return Camera(base_model.links, base_model.id, base_model.latitude, base_model.longitude, base_model.location, base_model.description, camera_views)
 
     def to_dict(self) -> dict:
-        result: dict = {"links": from_list(lambda x: to_class(Link, x), self.links), "id": from_str(self.id),
-                        "latitude": to_float(self.latitude), "longitude": to_float(self.longitude),
-                        "location": from_str(self.location), "description": from_str(self.description),
-                        "cameraViews": from_list(
-                            lambda x: to_class(CameraView, x), self.camera_views
-                        )}
+        """
+        Converts the Camera object into a dictionary.
+        :return: A dictionary representation of the Camera object.
+        """
+        result = self.base_to_dict()  # Get common fields from BaseModel
+        result.update({
+            "cameraViews": from_list(lambda x: to_class(CameraView, x), self.camera_views)
+        })
         return result

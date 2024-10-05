@@ -5,8 +5,10 @@ from PIL.Image import Image
 from ohgo_api.models.camera import Camera, CameraView
 from ohgo_api.models.contruction import Construction
 from ohgo_api.models.digital_sign import DigitalSign
+from ohgo_api.models.incident import Incident
 from ohgo_api.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
 from ohgo_api.models.weather_sensor_site import WeatherSensorSite
+from ohgo_api.models.dangerous_slowdown import DangerousSlowdown
 from ohgo_api.rest_adapter import RestAdapter
 from ohgo_api.exceptions import OHGoException
 from ohgo_api.image_handler import ImageHandler
@@ -170,7 +172,7 @@ class OHGoClient:
             raise OHGoException(f"No digital sign found with ID {digital_sign_id}")
         return DigitalSign.from_dict(result.data[0])
 
-    def get_construction(self, params: ConstructionParams = None, fetch_all=False, **kwargs) -> List[Construction]:
+    def get_constructions(self, params: ConstructionParams = None, fetch_all=False, **kwargs) -> List[Construction]:
         """
         Fetches construction from the OHGo API
         :param params: ConstructionParams object to pass to the API
@@ -184,6 +186,17 @@ class OHGoClient:
         result = self._rest_adapter.get(endpoint="construction", fetch_all=fetch_all, ep_params=ep_params)
         construction = [Construction.from_dict(construction) for construction in result.data]
         return construction
+
+    def get_construction(self, construction_id) -> Construction:
+        """
+        Fetches a single construction from the OHGo API
+        :param construction_id: The ID of the construction to fetch
+        :return: A Construction object
+        """
+        result = self._rest_adapter.get(endpoint=f"construction/{construction_id}")
+        if len(result.data) == 0:
+            raise OHGoException(f"No construction found with ID {construction_id}")
+        return Construction.from_dict(result.data[0])
 
     def get_weather_sensor_sites(self, params: WeatherSensorSiteParams = None, fetch_all=False, **kwargs) -> List[WeatherSensorSite]:
         """
@@ -210,3 +223,49 @@ class OHGoClient:
         if len(result.data) == 0:
             raise OHGoException(f"No weather sensor site found with ID {site_id}")
         return WeatherSensorSite.from_dict(result.data[0])
+
+    def get_incidents(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[Incident]:
+        """
+        Fetches incidents from the OHGo API
+        :param params: QueryParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of Incident objects
+        """
+        result = self._rest_adapter.get(endpoint="incidents", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
+        incidents = [Incident.from_dict(incident) for incident in result.data]
+        return incidents
+
+    def get_incident(self, incident_id) -> Incident:
+        """
+        Fetches a single incident from the OHGo API
+        :param incident_id: The ID of the incident to fetch
+        :return: An Incident object
+        """
+        result = self._rest_adapter.get(endpoint=f"incidents/{incident_id}")
+        if len(result.data) == 0:
+            raise OHGoException(f"No incident found with ID {incident_id}")
+        return Incident.from_dict(result.data[0])
+
+    def get_dangerous_slowdowns(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[DangerousSlowdown]:
+        """
+        Fetches dangerous slowdowns from the OHGo API
+        :param params: QueryParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of DangerousSlowdown objects
+        """
+        result = self._rest_adapter.get(endpoint="dangerous-slowdowns", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
+        slowdowns = [DangerousSlowdown.from_dict(slowdown) for slowdown in result.data]
+        return slowdowns
+
+    def get_dangerous_slowdown(self, slowdown_id) -> DangerousSlowdown:
+        """
+        Fetches a single dangerous slowdown from the OHGo API
+        :param slowdown_id: The ID of the dangerous slowdown to fetch
+        :return: A DangerousSlowdown object
+        """
+        result = self._rest_adapter.get(endpoint=f"dangerous-slowdowns/{slowdown_id}")
+        if len(result.data) == 0:
+            raise OHGoException(f"No dangerous slowdown found with ID {slowdown_id}")
+        return DangerousSlowdown.from_dict(result.data[0])
