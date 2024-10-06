@@ -1,15 +1,20 @@
 [build-system]
-requires = ['hatchling', 'requests', 'python-dateutil', 'pillow']
+requires = ['hatchling']
 build-backend = 'hatchling.build'
 
 [project]
 name = "ohgo"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
 	{ name="Tom Casavant", email="tfcasavant@gmail.com" }
 ]
 description = "A wrapper for the OHGO API"
 readme = "README.md"
+dependencies = [
+	"requests",
+	"python-dateutil",
+	"pillow"
+]
 requires-python = ">=3.8"
 classifiers = [
 	"Programming Language :: Python :: 3",
@@ -19,9 +24,10 @@ classifiers = [
 	"Topic :: Utilities",
 	"Topic :: Internet"
 ]
-
 keywords = ["ohgo", "ohio", "traffic", "cameras", "api", "wrapper"]
 
 [project.urls]
 Homepage = "https://github.com/TomCasavant/ohgo-wrapper"
 Issues = "https://github.com/TomCasavant/ohgo-wrapper/issues"
+
+
