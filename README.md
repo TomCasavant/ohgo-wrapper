@@ -58,12 +58,13 @@ client.get_constructions() # -> List[Construction]
 client.get_weather_sensor_sites() # -> List[WeatherSensorSite]
 client.get_incidents() # -> List[Incident]
 client.get_dangerous_slowdowns() # -> List[DangerousSlowdown]
+client.get_travel_delays() # -> List[TravelDelay]
 client.get_cameras() # -> List[Camera]
 ```
 
 ### Other Query Objects
 ```python
-from ohgo.models.query_params import QueryParams, DigitalSignParams, ConsutrctionParams, WeatherSensorSiteParams
+from ohgo.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
 from ohgo.models.enums import Region, SignType
 import datetime
     

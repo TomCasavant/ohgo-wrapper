@@ -6,6 +6,7 @@ from ohgo.models.camera import Camera, CameraView
 from ohgo.models.contruction import Construction
 from ohgo.models.digital_sign import DigitalSign
 from ohgo.models.incident import Incident
+from ohgo.models.travel_delay import TravelDelay
 from ohgo.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
 from ohgo.models.weather_sensor_site import WeatherSensorSite
 from ohgo.models.dangerous_slowdown import DangerousSlowdown
@@ -279,3 +280,25 @@ class OHGOClient:
         if len(result.data) == 0:
             raise OHGOException(f"No dangerous slowdown found with ID {slowdown_id}")
         return DangerousSlowdown.from_dict(result.data[0])
+
+    def get_travel_delays(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[TravelDelay]:
+        """
+        Fetches travel delays from the OHGO API
+        :param params: QueryParams object to pass to the API
+        :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param kwargs: Extra arguments to pass to the API.
+        :return: List of TravelDelay objects
+        """
+        result = self._rest_adapter.get(endpoint="travel-delays", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
+        delays = [TravelDelay.from_dict(delay) for delay in result.data]
+        return delays
+
+    def get_travel_delay(self, delay_id) -> TravelDelay:
+        """
+        Fetches a single travel delay from the OHGO API
+        :param delay_id: The ID of the travel delay to fetch
+        :return: A TravelDelay object
+        """
+        result = self._rest_adapter.get(endpoint=f"travel-delays/{delay_id}")
+        if len(result.data) == 0:
+            raise OHGOException(f"No travel delay found with ID {delay_id}")

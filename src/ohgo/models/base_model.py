@@ -5,6 +5,14 @@ from ohgo.models.models import from_list, from_str, from_float, Link, to_class, 
 
 @dataclass
 class BaseModel:
+
+    links: List[Link]
+    id: str
+    latitude: float
+    longitude: float
+    location: str
+    description: str
+
     def __init__(self, links: List['Link'], id: str, latitude: float, longitude: float, location: str, description: str) -> None:
         self.links = links
         self.id = id
