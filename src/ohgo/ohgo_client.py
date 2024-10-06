@@ -147,7 +147,7 @@ class OHGOClient:
         return [self.get_image(view, size) for view in camera.camera_views]
 
     @get_images.register
-    def get_images(self, digital_sign: DigitalSign) -> List[Image]:
+    def _(self, digital_sign: DigitalSign) -> List[Image]:
         """
         Fetches all images from a DigitalSign. Filters out any None values.
         :param digital_sign:
