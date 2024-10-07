@@ -1,9 +1,10 @@
-from ohgo.models.models import *
+from .models import *
 from typing import Tuple
 from dataclasses import dataclass
 
-from ohgo.models.enums import *
+from ohgo.types import *
 import logging
+from enum import Enum
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Any, Optional
 
-from ohgo.models.base_model import BaseModel
-from ohgo.models.models import from_list, from_str, Link, from_float, to_class, to_float, from_bool, \
+from .base_model import BaseModel
+from .models import from_list, from_str, Link, from_float, to_class, to_float, from_bool, \
     from_datetime, from_int
 
 

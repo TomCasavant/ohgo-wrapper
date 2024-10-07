@@ -2,14 +2,9 @@ import logging
 
 from PIL.Image import Image
 
-from ohgo.models.camera import Camera, CameraView
-from ohgo.models.contruction import Construction
-from ohgo.models.digital_sign import DigitalSign
-from ohgo.models.incident import Incident
-from ohgo.models.travel_delay import TravelDelay
-from ohgo.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
-from ohgo.models.weather_sensor_site import WeatherSensorSite
-from ohgo.models.dangerous_slowdown import DangerousSlowdown
+from .models import Camera, CameraView, Construction, DigitalSign, Incident, TravelDelay, WeatherSensorSite, DangerousSlowdown
+from .models import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
+
 from ohgo.rest_adapter import RestAdapter
 from ohgo.exceptions import OHGOException
 from ohgo.image_handler import ImageHandler

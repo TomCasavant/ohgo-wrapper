@@ -10,7 +10,7 @@ pip install ohgo
 ## Examples
 ### Authentication
 ```python
-from ohgo.ohgo_client import OHGOClient
+from ohgo import OHGOClient
 
 # Register with OHGo for an API Key (https://publicapi.ohgo.com/docs/registration)
 client = OHGOClient(api_key='YOUR-API-KEY')
@@ -23,15 +23,15 @@ cameras = client.get_cameras()
 
 ### Get All Cameras
 ```python
-from ohgo.models.query_params import QueryParams
+from ohgo.models import QueryParams
 params = QueryParams(page_all=True)
 cameras = client.get_cameras(params=params)
 ```
 
 ### Get Cameras by Filter
 ```python
-from ohgo.models.query_params import QueryParams
-from ohgo.models.enums import Region
+from ohgo.models import QueryParams
+from ohgo.types import Region
 params = QueryParams(county=Region.COLUMBUS, page_size=10, page=2)
 cameras = client.get_cameras(params=params)
 ```
@@ -64,8 +64,8 @@ client.get_cameras() # -> List[Camera]
 
 ### Other Query Objects
 ```python
-from ohgo.models.query_params import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
-from ohgo.models.enums import Region, SignType
+from ohgo.models import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
+from ohgo.types import Region, SignType
 import datetime
     
 # Note: If you use *all* these params you will probably get no results
