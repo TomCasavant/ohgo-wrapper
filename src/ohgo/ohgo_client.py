@@ -12,7 +12,7 @@ from ohgo.image_handler import ImageHandler
 from typing import List
 from functools import singledispatchmethod
 
-from .models.models import CachedResult, CameraListResult, CameraItemResult, DigitalSignListResult, \
+from .models import CachedResult, CameraListResult, CameraItemResult, DigitalSignListResult, \
     DigitalSignItemResult, ConstructionListResult, ConstructionItemResult, WeatherSensorSiteListResult, \
     WeatherSensorSiteItemResult, IncidentListResult, IncidentItemResult, DangerousSlowdownListResult, \
     DangerousSlowdownItemResult, TravelDelayListResult, TravelDelayItemResult

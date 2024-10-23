@@ -2,12 +2,10 @@ import requests
 import requests.packages
 from typing import Dict
 from .exceptions import OHGOException
-from ohgo.models.models import Result
+from .models import Result, CachedResult
 from json import JSONDecodeError
 import logging
 from io import BytesIO
-
-from .models.models import CachedResult
 
 
 class RestAdapter:
