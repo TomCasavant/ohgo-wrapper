@@ -78,3 +78,21 @@ weather_sensor_site_params = WeatherSensorSiteParams(hazards_only=True)
 
 # All params inherit default attributes from QueryParams
 ```
+
+### Cacheing Responses (ETag)
+For convenience, the OHGo API supports ETag headers. If you pass an etag value in the request, 
+the API will return an empty list if there are no changes since the last request. 
+This can be useful for reducing the number of requests made to the API. This applies to all endpoints.
+
+```python
+cameras = client.get_cameras() # -> Technically returns CameraListResult object
+etag = cameras.etag # -> Store this etag value and pass it in the next request
+new_cameras = client.get_cameras(etag=etag) # -> Returns empty list if no changes since last request
+cached = new_cameras.cached # -> True if the response was cached
+if (cached):
+    # use your original set of data
+    return cameras
+else:
+    # use the new set of data
+    return new_cameras
+```

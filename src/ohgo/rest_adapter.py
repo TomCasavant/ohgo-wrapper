@@ -1,8 +1,8 @@
 import requests
 import requests.packages
-from typing import Dict
+from typing import Dict, Union
 from .exceptions import OHGOException
-from ohgo.models.models import Result
+from .models import Result, CachedResult
 from json import JSONDecodeError
 import logging
 from io import BytesIO
@@ -47,20 +47,23 @@ class RestAdapter:
         if not ssl_verify:
             requests.packages.urllib3.disable_warnings()
 
-    def get(self, endpoint: str, ep_params: Dict = {}, fetch_all=False) -> Result:
+    def get(self, endpoint: str, ep_params: Dict = {}, fetch_all=False, etag: str = None) -> Result:
         """
-        Makes a GET request to the OHGO API
+        Makes a GET request to the OHGO API. If etag is provided and matches the etag from the next request we return
+        None
         :param endpoint: The endpoint to make the request to
         :param ep_params: The parameters to pass to the endpoint
-        :param fetch_all: Whether to fetch all results. Defaults to False. Recommended to use page-all param instead.
+        :param fetch_all: Whether to fetch all results. Defaults to False. Recommended to use page-all param
+        instead.
+        :param etag: The etag of the query, used for caching
         :return: A Result object
         """
-        result = self._do(http_method="GET", endpoint=endpoint, ep_params=ep_params)
+        result = self._do(http_method="GET", endpoint=endpoint, ep_params=ep_params, etag=etag)
         if fetch_all:
             # Fetch all results by following the next page links
             next_page_url = result.next_page
             while next_page_url:
-                page_result = self._do(http_method="GET", endpoint=next_page_url, ep_params=ep_params)
+                page_result = self._do(http_method="GET", endpoint=next_page_url, ep_params=ep_params, etag=etag)
                 result.data.extend(page_result.data)
                 next_page_url = page_result.next_page
         return result
@@ -80,23 +83,24 @@ class RestAdapter:
             raise OHGOException(f"Failed to fetch image from {url}") from e
 
     def _do(
-            self, http_method: str, endpoint: str, ep_params: Dict = {}, data: Dict = {}
-    ) -> Result:
+            self, http_method: str, endpoint: str, ep_params: Dict = {}, data: Dict = {}, etag: str = None
+    ) -> Union[Result, CachedResult]:
         """
         Helper method that makes a request to the OHGO API
         :param http_method: The HTTP method to use. Currently, OHGO only supports GET
         :param endpoint: The endpoint to make the request to
         :param ep_params: The parameters to pass to the endpoint
         :param data: The data to pass to the endpoint.
+        :param etag: The etag of the query, used for caching
         :return: A Result object
         """
         full_url = endpoint if endpoint.startswith('http') else self.url + endpoint
         headers = {
             "Authorization": f"APIKEY {self._api_key}"
         }
+        if etag:
+            headers["If-None-Match"] = etag
         ep_params = {k: v for k, v in ep_params.items() if v is not None}
-        print(http_method, endpoint, ep_params, data)
-        print(full_url)
         try:
             response = requests.request(
                 method=http_method,
@@ -108,13 +112,17 @@ class RestAdapter:
             )
         except (ValueError, JSONDecodeError) as e:
             raise OHGOException("Request failed.") from e
-        data_out = response.json()
         if 299 >= response.status_code >= 200:
+            data_out = response.json()
+            # ETag seems to come back surrounded by quotes, so we strip them
+            etag = response.headers.get("ETag", "").strip('"')
+
             # Successful request
             result = Result(
                 status_code=response.status_code,
                 message=response.reason,
                 data=data_out,
+                etag=etag,
             )
 
             for query_filter in result.rejected_filters:
@@ -122,4 +130,8 @@ class RestAdapter:
                 self._logger.warning(f" Error: {query_filter['error']} - {query_filter['key']}:{query_filter['value']}")
 
             return result
+        elif response.status_code == 304:
+            # Return cached result object with original etag
+            return CachedResult(etag=etag)
+
         raise OHGOException(f"{response.status_code}: {response.reason}")
