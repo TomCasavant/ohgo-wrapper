@@ -7,6 +7,8 @@ from json import JSONDecodeError
 import logging
 from io import BytesIO
 
+from .models.models import CachedResult
+
 
 class RestAdapter:
     """
@@ -47,12 +49,15 @@ class RestAdapter:
         if not ssl_verify:
             requests.packages.urllib3.disable_warnings()
 
-    def get(self, endpoint: str, ep_params: Dict = {}, fetch_all=False) -> Result:
+    def get(self, endpoint: str, ep_params: Dict = {}, fetch_all=False, etag: str = None) -> Result:
         """
-        Makes a GET request to the OHGO API
+        Makes a GET request to the OHGO API. If etag is provided and matches the etag from the next request we return
+        None
         :param endpoint: The endpoint to make the request to
         :param ep_params: The parameters to pass to the endpoint
-        :param fetch_all: Whether to fetch all results. Defaults to False. Recommended to use page-all param instead.
+        :param fetch_all: Whether to fetch all results. Defaults to False. Recommended to use page-all param
+        instead.
+        :param etag: The etag of the query, used for caching
         :return: A Result object
         """
         result = self._do(http_method="GET", endpoint=endpoint, ep_params=ep_params)
@@ -60,7 +65,7 @@ class RestAdapter:
             # Fetch all results by following the next page links
             next_page_url = result.next_page
             while next_page_url:
-                page_result = self._do(http_method="GET", endpoint=next_page_url, ep_params=ep_params)
+                page_result = self._do(http_method="GET", endpoint=next_page_url, ep_params=ep_params, etag=etag)
                 result.data.extend(page_result.data)
                 next_page_url = page_result.next_page
         return result
@@ -80,7 +85,7 @@ class RestAdapter:
             raise OHGOException(f"Failed to fetch image from {url}") from e
 
     def _do(
-            self, http_method: str, endpoint: str, ep_params: Dict = {}, data: Dict = {}
+            self, http_method: str, endpoint: str, ep_params: Dict = {}, data: Dict = {}, etag: str = None
     ) -> Result:
         """
         Helper method that makes a request to the OHGO API
@@ -90,10 +95,20 @@ class RestAdapter:
         :param data: The data to pass to the endpoint.
         :return: A Result object
         """
+        # Etag docs On the next request send Header
+        #
+        #             If-None-Match: 20190221101605
+        #
+        #
+        # If the data has changed since the last request, you will receive a 200 status code along with the requested data.
+        #
+        # If the data has NOT changed since the last request, you will receive a 304 status code and no data.
         full_url = endpoint if endpoint.startswith('http') else self.url + endpoint
         headers = {
             "Authorization": f"APIKEY {self._api_key}"
         }
+        if etag:
+            headers["If-None-Match"] = etag
         ep_params = {k: v for k, v in ep_params.items() if v is not None}
         print(http_method, endpoint, ep_params, data)
         print(full_url)
@@ -115,6 +130,7 @@ class RestAdapter:
                 status_code=response.status_code,
                 message=response.reason,
                 data=data_out,
+                etag=response.headers.get("ETag", ""),
             )
 
             for query_filter in result.rejected_filters:
@@ -122,4 +138,7 @@ class RestAdapter:
                 self._logger.warning(f" Error: {query_filter['error']} - {query_filter['key']}:{query_filter['value']}")
 
             return result
+        elif response.status_code == 304:
+            return CachedResult(etag=etag)
+
         raise OHGOException(f"{response.status_code}: {response.reason}")

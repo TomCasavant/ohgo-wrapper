@@ -2,7 +2,8 @@ import logging
 
 from PIL.Image import Image
 
-from .models import Camera, CameraView, Construction, DigitalSign, Incident, TravelDelay, WeatherSensorSite, DangerousSlowdown
+from .models import Camera, CameraView, Construction, DigitalSign, Incident, TravelDelay, WeatherSensorSite, \
+    DangerousSlowdown
 from .models import QueryParams, DigitalSignParams, ConstructionParams, WeatherSensorSiteParams
 
 from ohgo.rest_adapter import RestAdapter
@@ -10,6 +11,11 @@ from ohgo.exceptions import OHGOException
 from ohgo.image_handler import ImageHandler
 from typing import List
 from functools import singledispatchmethod
+
+from .models.models import CachedResult, CameraListResult, CameraItemResult, DigitalSignListResult, \
+    DigitalSignItemResult, ConstructionListResult, ConstructionItemResult, WeatherSensorSiteListResult, \
+    WeatherSensorSiteItemResult, IncidentListResult, IncidentItemResult, DangerousSlowdownListResult, \
+    DangerousSlowdownItemResult, TravelDelayListResult, TravelDelayItemResult
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -61,31 +67,51 @@ class OHGOClient:
         self._rest_adapter = RestAdapter(hostname, api_key, ver, ssl_verify, logger)
         self._image_handler = ImageHandler(self._rest_adapter)
 
-    def get_cameras(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[Camera]:
+    def get_cameras(self, params: QueryParams = None, fetch_all=False, etag=None, **kwargs) -> CameraListResult:
         """
         Fetches cameras from the OHGO API
         :param params: QueryParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API. QueryParams recommended instead. (provides basic validation)
         :return: List of Camera objects
         """
         ep_params = dict(params) if params else {}
         ep_params.update(kwargs)  # Add any extra arguments to ep_params
 
-        result = self._rest_adapter.get(endpoint="cameras", fetch_all=fetch_all, ep_params=ep_params)
-        cameras = [Camera.from_dict(camera) for camera in result.data]
+        result = self._rest_adapter.get(endpoint="cameras", fetch_all=fetch_all, ep_params=ep_params, etag=etag)
+
+        # Handle cached result
+        if isinstance(result, CachedResult):
+            return CameraListResult([], result.etag, True)
+
+        # Parse and create Camera objects from the result data
+        data = [Camera.from_dict(camera) for camera in result.data]
+
+        # Create and return CameraListResult with the etag
+        cameras = CameraListResult(data, etag=result.etag)
+
         return cameras
 
-    def get_camera(self, camera_id) -> Camera:
+    def get_camera(self, camera_id, etag=None) -> CameraItemResult:
         """
         Fetches a single camera from the OHGO API
         :param camera_id: The ID of the camera to fetch
+        :param etag: The etag of the query, used for caching
         :return: A Camera object
         """
-        result = self._rest_adapter.get(endpoint=f"cameras/{camera_id}")
+        result = self._rest_adapter.get(endpoint=f"cameras/{camera_id}", etag=etag)
+        if isinstance(result, CachedResult):
+            return CameraItemResult(None, etag=result.etag, cached=True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No camera found with ID {camera_id}")
-        return Camera.from_dict(result.data[0])
+
+        # Parse the result data into a Camera object and return CameraItemResult
+        camera = CameraItemResult(Camera.from_dict(result.data[0]),
+                                  etag=result.etag)
+
+        return camera
 
     @singledispatchmethod
     def get_image(self, obj, size="small"):
@@ -152,148 +178,231 @@ class OHGOClient:
         images = [self._image_handler.fetch(image_url) for image_url in digital_sign.image_urls]
         return [image for image in images if image is not None]
 
-    def get_digital_signs(self, params: DigitalSignParams = None, fetch_all=False, **kwargs) -> List[DigitalSign]:
+    def get_digital_signs(self, params: DigitalSignParams = None, fetch_all=False, etag=None,
+                          **kwargs) -> DigitalSignListResult:
         """
         Fetches digital signs from the OHGO API
         :param params: DigitalSignParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of DigitalSign objects
         """
         ep_params = dict(params) if params else {}
         ep_params.update(kwargs)
 
-        result = self._rest_adapter.get(endpoint="digital-signs", fetch_all=fetch_all, ep_params=ep_params)
-        digital_signs = [DigitalSign.from_dict(digital_sign) for digital_sign in result.data]
+        result = self._rest_adapter.get(endpoint="digital-signs", fetch_all=fetch_all, ep_params=ep_params, etag=etag)
+
+        if isinstance(result, CachedResult):
+            return DigitalSignListResult([], result.etag, True)
+
+        data = [DigitalSign.from_dict(digital_sign) for digital_sign in result.data]
+        digital_signs = DigitalSignListResult(data, etag=result.etag)
         return digital_signs
 
-    def get_digital_sign(self, digital_sign_id) -> DigitalSign:
+    def get_digital_sign(self, digital_sign_id, etag=None) -> DigitalSignItemResult:
         """
         Fetches a single digital sign from the OHGO API
         :param digital_sign_id: The ID of the digital sign to fetch
+        :param etag: The etag of the query, used for caching
         :return: A DigitalSign object
         """
-        result = self._rest_adapter.get(endpoint=f"digital-signs/{digital_sign_id}")
+        result = self._rest_adapter.get(endpoint=f"digital-signs/{digital_sign_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return DigitalSignItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No digital sign found with ID {digital_sign_id}")
-        return DigitalSign.from_dict(result.data[0])
 
-    def get_constructions(self, params: ConstructionParams = None, fetch_all=False, **kwargs) -> List[Construction]:
+        digital_sign = DigitalSignItemResult(DigitalSign.from_dict(result.data[0]), etag=result.etag)
+        return digital_sign
+
+    def get_constructions(self, params: ConstructionParams = None, fetch_all=False, etag=None,
+                          **kwargs) -> ConstructionListResult:
         """
         Fetches construction from the OHGO API
         :param params: ConstructionParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of Construction objects
         """
         ep_params = dict(params) if params else {}
         ep_params.update(kwargs)
 
-        result = self._rest_adapter.get(endpoint="construction", fetch_all=fetch_all, ep_params=ep_params)
-        construction = [Construction.from_dict(construction) for construction in result.data]
+        result = self._rest_adapter.get(endpoint="construction", fetch_all=fetch_all, ep_params=ep_params, etag=etag)
+        if isinstance(result, CachedResult):
+            return ConstructionListResult([], result.etag, True)
+
+        data = [Construction.from_dict(construction) for construction in result.data]
+        construction = ConstructionListResult(data, etag=result.etag)
         return construction
 
-    def get_construction(self, construction_id) -> Construction:
+    def get_construction(self, construction_id, etag=None) -> ConstructionItemResult:
         """
         Fetches a single construction from the OHGO API
         :param construction_id: The ID of the construction to fetch
+        :param etag: The etag of the query, used for caching
         :return: A Construction object
         """
-        result = self._rest_adapter.get(endpoint=f"construction/{construction_id}")
+        result = self._rest_adapter.get(endpoint=f"construction/{construction_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return ConstructionItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No construction found with ID {construction_id}")
-        return Construction.from_dict(result.data[0])
 
-    def get_weather_sensor_sites(self, params: WeatherSensorSiteParams = None, fetch_all=False, **kwargs) -> List[WeatherSensorSite]:
+        construction = ConstructionItemResult(Construction.from_dict(result.data[0]), etag=result.etag)
+        return construction
+
+    def get_weather_sensor_sites(self, params: WeatherSensorSiteParams = None, fetch_all=False, etag=None,
+                                 **kwargs) -> WeatherSensorSiteListResult:
         """
         Fetches weather sensor sites from the OHGO API
         :param params: WeatherSensorSiteParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of WeatherSensorSite objects
         """
         ep_params = dict(params) if params else {}
         ep_params.update(kwargs)
 
-        result = self._rest_adapter.get(endpoint="weather-sensor-sites", fetch_all=fetch_all, ep_params=ep_params)
-        weather_sensor_sites = [WeatherSensorSite.from_dict(weather_sensor_site) for weather_sensor_site in result.data]
+        result = self._rest_adapter.get(endpoint="weather-sensor-sites", fetch_all=fetch_all, ep_params=ep_params,
+                                        etag=etag)
+        if isinstance(result, CachedResult):
+            return WeatherSensorSiteListResult([], result.etag, True)
+
+        data = [WeatherSensorSite.from_dict(weather_sensor_site) for weather_sensor_site in result.data]
+        weather_sensor_sites = WeatherSensorSiteListResult(data, etag=result.etag)
         return weather_sensor_sites
 
-    def get_weather_sensor_site(self, site_id) -> WeatherSensorSite:
+    def get_weather_sensor_site(self, site_id, etag=None) -> WeatherSensorSiteItemResult:
         """
         Fetches a single weather sensor site from the OHGO API
         :param site_id: The ID of the weather sensor site to fetch
+        :param etag: The etag of the query, used for caching
         :return: A WeatherSensorSite object
         """
-        result = self._rest_adapter.get(endpoint=f"weather-sensor-sites/{site_id}")
+        result = self._rest_adapter.get(endpoint=f"weather-sensor-sites/{site_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return WeatherSensorSiteItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No weather sensor site found with ID {site_id}")
-        return WeatherSensorSite.from_dict(result.data[0])
 
-    def get_incidents(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[Incident]:
+        weather_sensor_site = WeatherSensorSiteItemResult(WeatherSensorSite.from_dict(result.data[0]), etag=result.etag)
+        return weather_sensor_site
+
+    def get_incidents(self, params: QueryParams = None, fetch_all=False, etag=None, **kwargs) -> IncidentListResult:
         """
         Fetches incidents from the OHGO API
         :param params: QueryParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of Incident objects
         """
-        result = self._rest_adapter.get(endpoint="incidents", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
-        incidents = [Incident.from_dict(incident) for incident in result.data]
+        result = self._rest_adapter.get(endpoint="incidents", fetch_all=fetch_all,
+                                        ep_params=dict(params) if params else kwargs, etag=etag)
+        if isinstance(result, CachedResult):
+            return IncidentListResult([], result.etag, True)
+
+        data = [Incident.from_dict(incident) for incident in result.data]
+        incidents = IncidentListResult(data, etag=result.etag)
         return incidents
 
-    def get_incident(self, incident_id) -> Incident:
+    def get_incident(self, incident_id, etag=None) -> IncidentItemResult:
         """
         Fetches a single incident from the OHGO API
         :param incident_id: The ID of the incident to fetch
+        :param etag: The etag of the query, used for caching
         :return: An Incident object
         """
-        result = self._rest_adapter.get(endpoint=f"incidents/{incident_id}")
+        result = self._rest_adapter.get(endpoint=f"incidents/{incident_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return IncidentItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No incident found with ID {incident_id}")
-        return Incident.from_dict(result.data[0])
 
-    def get_dangerous_slowdowns(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[DangerousSlowdown]:
+        incident = IncidentItemResult(Incident.from_dict(result.data[0]), etag=result.etag)
+        return incident
+
+    def get_dangerous_slowdowns(self, params: QueryParams = None, fetch_all=False, etag=None,
+                                **kwargs) -> DangerousSlowdownListResult:
         """
         Fetches dangerous slowdowns from the OHGO API
         :param params: QueryParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of DangerousSlowdown objects
         """
-        result = self._rest_adapter.get(endpoint="dangerous-slowdowns", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
-        slowdowns = [DangerousSlowdown.from_dict(slowdown) for slowdown in result.data]
+        result = self._rest_adapter.get(endpoint="dangerous-slowdowns", fetch_all=fetch_all,
+                                        ep_params=dict(params) if params else kwargs, etag=etag)
+
+        if isinstance(result, CachedResult):
+            return DangerousSlowdownListResult([], result.etag, True)
+
+        data = [DangerousSlowdown.from_dict(slowdown) for slowdown in result.data]
+        slowdowns = DangerousSlowdownListResult(data, etag=result.etag)
         return slowdowns
 
-    def get_dangerous_slowdown(self, slowdown_id) -> DangerousSlowdown:
+    def get_dangerous_slowdown(self, slowdown_id, etag=None) -> DangerousSlowdownItemResult:
         """
         Fetches a single dangerous slowdown from the OHGO API
         :param slowdown_id: The ID of the dangerous slowdown to fetch
+        :param etag: The etag of the query, used for caching
         :return: A DangerousSlowdown object
         """
-        result = self._rest_adapter.get(endpoint=f"dangerous-slowdowns/{slowdown_id}")
+        result = self._rest_adapter.get(endpoint=f"dangerous-slowdowns/{slowdown_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return DangerousSlowdownItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No dangerous slowdown found with ID {slowdown_id}")
-        return DangerousSlowdown.from_dict(result.data[0])
 
-    def get_travel_delays(self, params: QueryParams = None, fetch_all=False, **kwargs) -> List[TravelDelay]:
+        return DangerousSlowdownItemResult(DangerousSlowdown.from_dict(result.data[0]), etag=result.etag)
+
+    def get_travel_delays(self, params: QueryParams = None, fetch_all=False, etag=None,
+                          **kwargs) -> TravelDelayListResult:
         """
         Fetches travel delays from the OHGO API
         :param params: QueryParams object to pass to the API
         :param fetch_all: Pages through all results if True. Recommended to use page-all param instead.
+        :param etag: The etag of the query, used for caching
         :param kwargs: Extra arguments to pass to the API.
         :return: List of TravelDelay objects
         """
-        result = self._rest_adapter.get(endpoint="travel-delays", fetch_all=fetch_all, ep_params=dict(params) if params else kwargs)
-        delays = [TravelDelay.from_dict(delay) for delay in result.data]
+        result = self._rest_adapter.get(endpoint="travel-delays", fetch_all=fetch_all,
+                                        ep_params=dict(params) if params else kwargs, etag=etag)
+        # delays = [TravelDelay.from_dict(delay) for delay in result.data]
+        if isinstance(result, CachedResult):
+            return TravelDelayListResult([], result.etag, True)
+
+        data = [TravelDelay.from_dict(delay) for delay in result.data]
+        delays = TravelDelayListResult(data, etag=result.etag)
         return delays
 
-    def get_travel_delay(self, delay_id) -> TravelDelay:
+    def get_travel_delay(self, delay_id, etag=None) -> TravelDelayItemResult:
         """
         Fetches a single travel delay from the OHGO API
         :param delay_id: The ID of the travel delay to fetch
+        :param etag: The etag of the query, used for caching
         :return: A TravelDelay object
         """
-        result = self._rest_adapter.get(endpoint=f"travel-delays/{delay_id}")
+        result = self._rest_adapter.get(endpoint=f"travel-delays/{delay_id}", etag=etag)
+
+        if isinstance(result, CachedResult):
+            return TravelDelayItemResult(None, result.etag, True)
+
         if len(result.data) == 0:
             raise OHGOException(f"No travel delay found with ID {delay_id}")
+
+        return TravelDelayItemResult(TravelDelay.from_dict(result.data[0]), etag=result.etag)
