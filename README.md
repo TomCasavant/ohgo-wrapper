@@ -79,7 +79,7 @@ weather_sensor_site_params = WeatherSensorSiteParams(hazards_only=True)
 # All params inherit default attributes from QueryParams
 ```
 
-### Cacheing Responses (ETag)
+### Caching Responses (ETag)
 For convenience, the OHGo API supports ETag headers. If you pass an etag value in the request, 
 the API will return an empty list if there are no changes since the last request. 
 This can be useful for reducing the number of requests made to the API. This applies to all endpoints.
