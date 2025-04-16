@@ -32,7 +32,7 @@ cameras = client.get_cameras(params=params)
 ```python
 from ohgo.models import QueryParams
 from ohgo.types import Region
-params = QueryParams(county=Region.COLUMBUS, page_size=10, page=2)
+params = QueryParams(region=Region.COLUMBUS, page_size=10, page=2)
 cameras = client.get_cameras(params=params)
 ```
 
